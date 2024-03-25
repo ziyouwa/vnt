@@ -1,7 +1,9 @@
+#![warn(clippy::missing_safety_doc)]
+#![allow(dead_code)]
+
 use std::ffi::{CStr, CString};
 use std::net::Ipv4Addr;
 use std::os::fd::AsRawFd;
-use std::process::Command;
 use std::{io, mem, ptr};
 
 use libc::{
@@ -78,10 +80,10 @@ impl Device {
                 let mac_out = exe_cmd(&get_mac_cmd)?;
                 let mac_str = String::from_utf8(mac_out.stdout).unwrap();
                 let mut mac = [0; 6];
-                let mut split = mac_str.split(":");
-                for i in 0..6 {
+                let mut split = mac_str.split(':');
+                (0..6).for_each(|i| {
                     mac[i] = u8::from_str_radix(&split.next().unwrap()[..2], 16).unwrap();
-                }
+                });
                 Some(mac)
             } else {
                 None
@@ -138,7 +140,7 @@ impl Device {
             let mut req = self.request();
 
             if siocgifaddr(self.ctl.as_raw_fd(), &mut req) < 0 {
-                return Err(io::Error::last_os_error().into());
+                return Err(io::Error::last_os_error());
             }
 
             SockAddr::new(&req.ifr_ifru.ifru_addr).map(Into::into)

@@ -227,10 +227,8 @@ impl ContextInner {
         server_addr: SocketAddr,
         send_default: bool,
     ) -> io::Result<()> {
-        if self.packet_loss_rate > 0 {
-            if rand::thread_rng().gen_ratio(self.packet_loss_rate, PACKET_LOSS_RATE_DENOMINATOR) {
-                return Ok(());
-            }
+        if self.packet_loss_rate > 0 && rand::thread_rng().gen_ratio(self.packet_loss_rate, PACKET_LOSS_RATE_DENOMINATOR) {
+            return Ok(());
         }
         if self.packet_delay > 0 {
             thread::sleep(Duration::from_millis(self.packet_delay as _));
@@ -274,36 +272,33 @@ impl ContextInner {
         } else {
             if let Some(main_udp) = self.main_udp_socket.get(route_key.index) {
                 main_udp.send_to(buf, route_key.addr)?;
+            } else if let Some(udp) = self
+                .sub_udp_socket
+                .read()
+                .get(route_key.index - self.main_udp_socket.len())
+            {
+                udp.send_to(buf, route_key.addr)?;
             } else {
-                if let Some(udp) = self
-                    .sub_udp_socket
-                    .read()
-                    .get(route_key.index - self.main_udp_socket.len())
-                {
-                    udp.send_to(buf, route_key.addr)?;
-                } else {
-                    Err(io::Error::from(io::ErrorKind::NotFound))?
-                }
+                Err(io::Error::from(io::ErrorKind::NotFound))?
             }
             Ok(())
         }
     }
     pub fn remove_route(&self, ip: &Ipv4Addr, route_key: RouteKey) {
-        if self.route_table.remove_route(ip, route_key) {
-            if route_key.is_tcp {
-                if let Some(tcp) = self.tcp_map.write().remove(&route_key.addr) {
-                    if let Err(e) = tcp.shutdown() {
-                        log::warn!("{:?}", e);
-                    }
+        if self.route_table.remove_route(ip, route_key) && route_key.is_tcp {
+            if let Some(tcp) = self.tcp_map.write().remove(&route_key.addr) {
+                if let Err(e) = tcp.shutdown() {
+                    log::warn!("{:?}", e);
                 }
             }
         }
     }
 }
 
+type RouteList = HashMap<Ipv4Addr, (AtomicUsize, Vec<(Route, AtomicCell<Instant>)>)>;
 pub struct RouteTable {
     pub(crate) route_table:
-        RwLock<HashMap<Ipv4Addr, (AtomicUsize, Vec<(Route, AtomicCell<Instant>)>)>>,
+        RwLock<RouteList>,
     first_latency: bool,
     channel_num: usize,
     use_channel_type: UseChannelType,
@@ -344,13 +339,10 @@ impl RouteTable {
     }
     fn add_route_(&self, id: Ipv4Addr, route: Route, only_if_absent: bool) {
         // 限制通道类型
-        match self.use_channel_type {
-            UseChannelType::P2p => {
-                if !route.is_p2p() {
-                    return;
-                }
+        if let UseChannelType::P2p = self.use_channel_type {
+            if !route.is_p2p() {
+                return;
             }
-            _ => {}
         }
         let key = route.route_key();
         let mut route_table = self.route_table.write();
@@ -391,11 +383,9 @@ impl RouteTable {
             };
             self.truncate_(list, limit_len);
         } else {
-            if !self.first_latency {
-                if route.is_p2p() {
-                    //非优先延迟的情况下 添加了直连的则排除非直连的
-                    list.retain(|(k, _)| k.is_p2p());
-                }
+            if !self.first_latency && route.is_p2p() {
+                //非优先延迟的情况下 添加了直连的则排除非直连的
+                list.retain(|(k, _)| k.is_p2p());
             };
             //增加路由表容量，避免波动
             let limit_len = self.channel_num * 2;
@@ -475,7 +465,7 @@ impl RouteTable {
         let table = self.route_table.read();
         table
             .iter()
-            .map(|(k, (_, v))| (k.clone(), v.iter().map(|(i, _)| *i).collect()))
+            .map(|(k, (_, v))| (*k, v.iter().map(|(i, _)| *i).collect()))
             .collect()
     }
     pub fn route_table_p2p(&self) -> Vec<(Ipv4Addr, Route)> {
@@ -512,7 +502,7 @@ impl RouteTable {
                 false
             }
         } else {
-            return true;
+            true
         }
     }
     /// 更新路由入栈包的时刻，长时间没有收到数据的路由将会被剔除

@@ -12,7 +12,7 @@ use mio::{Registry, Waker};
 use parking_lot::Mutex;
 
 use packet::ip::ipv4::packet::IpV4Packet;
-use packet::udp::udp::UdpPacket;
+use packet::udp::vnt_udp::UdpPacket;
 
 use crate::ip_proxy::ProxyHandler;
 use crate::util::{Scheduler, StopManager};
@@ -72,7 +72,7 @@ impl ProxyHandler for UdpProxy {
         let key = SocketAddrV4::new(source, source_port);
         self.nat_map
             .lock()
-            .insert(key.into(), SocketAddrV4::new(dest_ip, dest_port).into());
+            .insert(key, SocketAddrV4::new(dest_ip, dest_port));
         Ok(false)
     }
 
@@ -290,7 +290,7 @@ fn readable_handle(
     token: &Token,
     buf: &mut [u8],
 ) -> io::Result<()> {
-    if let Some((dest_udp, src_addr, time)) = token_map.get_mut(&token) {
+    if let Some((dest_udp, src_addr, time)) = token_map.get_mut(token) {
         loop {
             let len = match dest_udp.recv(buf) {
                 Ok(rs) => rs,

@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::{fmt, io};
 
 /// 地址解析协议，由IP地址找到MAC地址

@@ -3,7 +3,7 @@ use std::net::Ipv4Addr;
 pub fn ips_parse(ips: &Vec<String>) -> Result<Vec<(u32, u32, Ipv4Addr)>, String> {
     let mut in_ips_c = vec![];
     for x in ips {
-        let mut split = x.split(",");
+        let mut split = x.split(',');
         let net = if let Some(net) = split.next() {
             net
         } else {
@@ -19,7 +19,7 @@ pub fn ips_parse(ips: &Vec<String>) -> Result<Vec<(u32, u32, Ipv4Addr)>, String>
         } else {
             return Err("not ipv4".to_string());
         };
-        let mut split = net.split("/");
+        let mut split = net.split('/');
         let dest = if let Some(dest) = split.next() {
             dest
         } else {
@@ -44,7 +44,7 @@ pub fn ips_parse(ips: &Vec<String>) -> Result<Vec<(u32, u32, Ipv4Addr)>, String>
 pub fn out_ips_parse(ips: &Vec<String>) -> Result<Vec<(u32, u32)>, String> {
     let mut in_ips_c = vec![];
     for x in ips {
-        let mut split = x.split("/");
+        let mut split = x.split('/');
         let dest = if let Some(dest) = split.next() {
             dest
         } else {
@@ -71,9 +71,9 @@ pub fn to_ip(mask: &str) -> Result<u32, String> {
         if m >= 32 {
             return Err("not netmask".to_string());
         }
-        let mut mask = 0 as u32;
+        let mut mask = 0_u32;
         for i in 0..m {
-            mask = mask | (1 << (31 - i));
+            mask |= 1 << (31 - i);
         }
         Ok(mask)
     } else {

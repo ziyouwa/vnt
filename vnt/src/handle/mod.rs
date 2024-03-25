@@ -87,9 +87,9 @@ impl PeerDeviceStatus {
     }
 }
 
-impl Into<u8> for PeerDeviceStatus {
-    fn into(self) -> u8 {
-        match self {
+impl From<PeerDeviceStatus> for u8 {
+    fn from(val: PeerDeviceStatus) -> Self {
+        match val {
             PeerDeviceStatus::Online => 0,
             PeerDeviceStatus::Offline => 1,
         }

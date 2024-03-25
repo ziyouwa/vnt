@@ -23,7 +23,7 @@ pub fn create_device(config: &Config) -> io::Result<Arc<Device>> {
             .device_name
             .clone()
             .unwrap_or(default_name.to_string());
-        if &device_name == default_name {
+        if device_name == default_name {
             delete_device(default_name);
         }
         Arc::new(Device::new(Some(device_name), config.tap)?)

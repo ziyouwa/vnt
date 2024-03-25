@@ -1,4 +1,4 @@
-pub const VNT_VERSION: &'static str = env!("CARGO_PKG_VERSION");
+pub const VNT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub mod channel;
 pub mod cipher;

@@ -1,4 +1,5 @@
 [workspace]
+resolver = "2"
 members = ["vnt","common","vnt-cli","vnt-jni"]
 
 [profile.release]

@@ -19,10 +19,11 @@ pub mod tcp_channel;
 pub mod udp_channel;
 
 const BUFFER_SIZE: usize = 1024 * 16;
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Default, Copy, Clone, Eq, PartialEq)]
 pub enum UseChannelType {
     Relay,
     P2p,
+    #[default]
     All,
 }
 impl UseChannelType {
@@ -48,11 +49,7 @@ impl FromStr for UseChannelType {
         }
     }
 }
-impl Default for UseChannelType {
-    fn default() -> Self {
-        UseChannelType::All
-    }
-}
+
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum Status {
     Cone,

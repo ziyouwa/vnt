@@ -30,6 +30,12 @@ impl SingleU64Adder {
     }
 }
 
+impl Default for SingleU64Adder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 struct SingleU64AdderInner {
     ptr: *mut u64,
 }

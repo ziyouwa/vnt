@@ -108,16 +108,16 @@ impl<B: AsRef<[u8]>> IpV4Packet<B> {
     /// 类别(3)+丢失概率(2)+用途(1)
     ///
     ///
-    /// 类别子字段值	|  名称
+    /// 类别子字段值  |  名称
     /// ---|:---
-    /// 000	 | 常规(Routine)
-    /// 001  | 优先(Priority)
-    /// 010	 | 立即(Immediate)
-    /// 011	 | 瞬间(Flash)
-    /// 100	 | 瞬间覆盖(Flash Override)
-    /// 101	 | 严重(CRITIC/ECP)
-    /// 110	 | 网间控制(Internetwork Control)
-    /// 111	 | 网络控制(Network Control)
+    /// 000     | 常规(Routine)
+    /// 001     | 优先(Priority)
+    /// 010     | 立即(Immediate)
+    /// 011     | 瞬间(Flash)
+    /// 100     | 瞬间覆盖(Flash Override)
+    /// 101     | 严重(CRITIC/ECP)
+    /// 110     | 网间控制(Internetwork Control)
+    /// 111     | 网络控制(Network Control)
     ///
     ///
     /// 参考：https://www.modb.pro/db/477116

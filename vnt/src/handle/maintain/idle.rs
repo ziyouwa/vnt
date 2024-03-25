@@ -194,7 +194,7 @@ pub fn domain_request0(
     if let Ok(mut addr) = config.server_addr.to_socket_addrs() {
         if let Some(addr) = addr.next() {
             if addr != current_dev.connect_server {
-                let mut tmp = current_dev.clone();
+                let mut tmp = current_dev;
                 tmp.connect_server = addr;
                 let rs = current_device.compare_exchange(current_dev, tmp);
                 current_dev.connect_server = addr;

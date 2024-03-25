@@ -3,7 +3,7 @@ use std::{io, thread};
 
 use crossbeam_utils::atomic::AtomicCell;
 
-use packet::icmp::icmp::IcmpPacket;
+use packet::icmp::vnt_icmp::IcmpPacket;
 use packet::icmp::Kind;
 use packet::ip::ipv4;
 use packet::ip::ipv4::packet::IpV4Packet;
@@ -55,9 +55,9 @@ fn handle(
     let src_ip = ipv4_packet.source_ip();
     let dest_ip = ipv4_packet.destination_ip();
     if src_ip == dest_ip {
-        return icmp(&device_writer, ipv4_packet);
+        return icmp(device_writer, ipv4_packet);
     }
-    return crate::handle::tun_tap::base_handle(
+    crate::handle::tun_tap::base_handle(
         context,
         data,
         len,
@@ -67,7 +67,7 @@ fn handle(
         proxy_map,
         client_cipher,
         server_cipher,
-    );
+    )
 }
 
 pub fn start(
@@ -189,7 +189,7 @@ fn start_simple(
         let len = device.read(&mut buf[12..])? + 12;
         //单线程的
         up_counter.add(len as u64);
-        #[cfg(any(target_os = "macos"))]
+        #[cfg(target_os = "macos")]
         let mut buf = &mut buf[4..];
         // buf是重复利用的，需要重置头部
         buf[..12].fill(0);

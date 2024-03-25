@@ -66,7 +66,7 @@ impl AesEcbCipher {
             }
             let secret_body = &net_packet.payload()[..len - 12];
             let finger = finger.calculate_finger(&nonce_raw, secret_body);
-            if &finger != &net_packet.payload()[len - 12..] {
+            if finger != net_packet.payload()[len - 12..] {
                 return Err(io::Error::new(io::ErrorKind::Other, "finger err"));
             }
             net_packet.set_data_len(net_packet.data_len() - finger.len())?;

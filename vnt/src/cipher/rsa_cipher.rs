@@ -54,7 +54,7 @@ impl RsaCipher {
         }
     }
     pub fn public_key(&self) -> io::Result<&RsaPublicKey> {
-        return Ok(&self.inner.public_key);
+        Ok(&self.inner.public_key)
     }
 }
 

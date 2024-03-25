@@ -35,10 +35,10 @@ fn read_command_port() -> io::Result<u16> {
     match u16::from_str(&port) {
         Ok(port) => Ok(port),
         Err(_) => {
-            return Err(io::Error::new(
+            Err(io::Error::new(
                 io::ErrorKind::Other,
                 "'command-port' file error",
-            ));
+            ))
         }
     }
 }

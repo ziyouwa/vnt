@@ -8,8 +8,8 @@ use mio::net::UdpSocket;
 use mio::{Events, Interest, Poll, Token, Waker};
 use parking_lot::Mutex;
 
-use packet::icmp::icmp;
-use packet::icmp::icmp::HeaderOther;
+use packet::icmp::vnt_icmp;
+use packet::icmp::vnt_icmp::HeaderOther;
 use packet::ip::ipv4::packet::IpV4Packet;
 
 use crate::channel::context::Context;
@@ -143,10 +143,10 @@ fn readable_handle(
                 buf,
                 12 + len,
                 peer_ip,
-                &nat_map,
-                &context,
-                &current_device,
-                &client_cipher,
+                nat_map,
+                context,
+                current_device,
+                client_cipher,
             );
         }
     }
@@ -160,45 +160,40 @@ fn recv_handle(
     current_device: &AtomicCell<CurrentDeviceInfo>,
     client_cipher: &Cipher,
 ) {
-    match IpV4Packet::new(&mut buf[12..data_len]) {
-        Ok(mut ipv4_packet) => match icmp::IcmpPacket::new(ipv4_packet.payload()) {
-            Ok(icmp_packet) => match icmp_packet.header_other() {
-                HeaderOther::Identifier(id, seq) => {
-                    if let Some(dest_ip) = nat_map.lock().get(&(peer_ip, id, seq)).cloned() {
-                        ipv4_packet.set_destination_ip(dest_ip);
-                        ipv4_packet.update_checksum();
+    if let Ok(mut ipv4_packet) = IpV4Packet::new(&mut buf[12..data_len]) {
+        if let Ok(icmp_packet) = vnt_icmp::IcmpPacket::new(ipv4_packet.payload()) {
+            if let HeaderOther::Identifier(id, seq) = icmp_packet.header_other() {
+                if let Some(dest_ip) = nat_map.lock().get(&(peer_ip, id, seq)).cloned() {
+                    ipv4_packet.set_destination_ip(dest_ip);
+                    ipv4_packet.update_checksum();
 
-                        let current_device = current_device.load();
-                        let virtual_ip = current_device.virtual_ip();
+                    let current_device = current_device.load();
+                    let virtual_ip = current_device.virtual_ip();
 
-                        let mut net_packet = NetPacket::new0(data_len, buf).unwrap();
-                        net_packet.set_version(Version::V1);
-                        net_packet.set_protocol(protocol::Protocol::IpTurn);
-                        net_packet.set_transport_protocol(
-                            protocol::ip_turn_packet::Protocol::Ipv4.into(),
-                        );
-                        net_packet.first_set_ttl(MAX_TTL);
-                        net_packet.set_source(virtual_ip);
-                        net_packet.set_destination(dest_ip);
-                        if let Err(e) = client_cipher.encrypt_ipv4(&mut net_packet) {
-                            log::warn!("加密失败:{}", e);
-                            return;
-                        }
-                        if let Err(e) = context.send_ipv4_by_id(
-                            net_packet.buffer(),
-                            &dest_ip,
-                            current_device.connect_server,
-                            current_device.status.online(),
-                        ) {
-                            log::warn!("发送到目标失败:{}", e);
-                        }
+                    let mut net_packet = NetPacket::new0(data_len, buf).unwrap();
+                    net_packet.set_version(Version::V1);
+                    net_packet.set_protocol(protocol::Protocol::IpTurn);
+                    net_packet.set_transport_protocol(
+                        protocol::ip_turn_packet::Protocol::Ipv4.into(),
+                    );
+                    net_packet.first_set_ttl(MAX_TTL);
+                    net_packet.set_source(virtual_ip);
+                    net_packet.set_destination(dest_ip);
+                    if let Err(e) = client_cipher.encrypt_ipv4(&mut net_packet) {
+                        log::warn!("加密失败:{}", e);
+                        return;
+                    }
+                    if let Err(e) = context.send_ipv4_by_id(
+                        net_packet.buffer(),
+                        &dest_ip,
+                        current_device.connect_server,
+                        current_device.status.online(),
+                    ) {
+                        log::warn!("发送到目标失败:{}", e);
                     }
                 }
-                _ => {}
-            },
-            Err(_) => {}
-        },
-        Err(_) => {}
+            }
+        }
     }
 }
 
@@ -216,7 +211,7 @@ impl ProxyHandler for IcmpProxy {
         }
         let dest_ip = ipv4.destination_ip();
         //转发到代理目标地址
-        let icmp_packet = icmp::IcmpPacket::new(ipv4.payload())?;
+        let icmp_packet = vnt_icmp::IcmpPacket::new(ipv4.payload())?;
         match icmp_packet.header_other() {
             HeaderOther::Identifier(id, seq) => {
                 self.nat_map.lock().insert((dest_ip, id, seq), source);

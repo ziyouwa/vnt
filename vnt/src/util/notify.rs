@@ -84,7 +84,7 @@ impl StopManagerInner {
         let mut guard = self.listeners.lock();
         guard.0 = true;
         for (name, listener) in guard.1.drain(..) {
-            if &name == skip_name {
+            if name == skip_name {
                 continue;
             }
             listener();

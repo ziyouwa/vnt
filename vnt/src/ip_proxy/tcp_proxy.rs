@@ -14,7 +14,7 @@ use mio::{net::TcpListener, Events, Interest, Poll, Registry, Token, Waker};
 use parking_lot::Mutex;
 
 use packet::ip::ipv4::packet::IpV4Packet;
-use packet::tcp::tcp::TcpPacket;
+use packet::tcp::vnt_tcp::TcpPacket;
 
 use crate::ip_proxy::ProxyHandler;
 use crate::util::StopManager;
@@ -133,31 +133,25 @@ fn tcp_proxy(
                 Token(index) => {
                     let (val, src_index) = if let Some(v) = tcp_map.get_mut(&index) {
                         (v, index)
-                    } else {
-                        if let Some(dest_index) = mapping.get(&index) {
-                            if let Some(v) = tcp_map.get_mut(dest_index) {
-                                (v, *dest_index)
-                            } else {
-                                continue;
-                            }
+                    } else if let Some(dest_index) = mapping.get(&index) {
+                        if let Some(v) = tcp_map.get_mut(dest_index) {
+                            (v, *dest_index)
                         } else {
                             continue;
                         }
+                    } else {
+                        continue;
                     };
                     let (stream1, stream2, buf1, buf2, state1, state2) = val.as_mut(index);
-                    if event.is_readable() {
-                        if let Err(_) = readable_handle(stream1, stream2, buf1, state2) {
-                            *state1 |= READ_CLOSED;
-                        }
+                    if event.is_readable() && readable_handle(stream1, stream2, buf1, state2).is_err() {
+                        *state1 |= READ_CLOSED;
                     }
                     if event.is_writable() {
                         let read = buf2.len() >= BUF_LEN;
-                        if let Err(_) = writable_handle(stream1, buf2) {
+                        if writable_handle(stream1, buf2).is_err() {
                             *state1 |= WRITE_CLOSED;
-                        } else if read {
-                            if readable_handle(stream2, stream1, buf2, state1).is_err() {
-                                *state2 |= READ_CLOSED;
-                            }
+                        } else if read && readable_handle(stream2, stream1, buf2, state1).is_err() {
+                            *state2 |= READ_CLOSED;
                         }
                     }
                     if event.is_read_closed() || event.is_error() {
@@ -411,7 +405,7 @@ fn readable_handle(
 
 fn writable_handle(stream: &mut TcpStream, mid_buf: &mut BytesMut) -> io::Result<()> {
     while !mid_buf.is_empty() {
-        match stream.write(&mid_buf) {
+        match stream.write(mid_buf) {
             Ok(len) => {
                 let _ = mid_buf.split_to(len);
             }

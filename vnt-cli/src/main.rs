@@ -84,7 +84,7 @@ fn main() {
         Ok(m) => m,
         Err(f) => {
             print_usage(&program, opts);
-            println!("{}", f.to_string());
+            println!("{}", f);
             return;
         }
     };
@@ -218,7 +218,7 @@ fn main() {
         };
         let virtual_ip: Option<String> = matches.opt_get("ip").unwrap();
         let virtual_ip =
-            virtual_ip.map(|v| Ipv4Addr::from_str(&v).expect(&format!("'--ip {}' error", v)));
+            virtual_ip.map(|v| Ipv4Addr::from_str(&v).unwrap_or_else(|_| panic!("'--ip {}' error", v)));
         if let Some(virtual_ip) = virtual_ip {
             if virtual_ip.is_unspecified() || virtual_ip.is_broadcast() || virtual_ip.is_multicast()
             {
@@ -275,7 +275,7 @@ fn main() {
         let use_channel_type = matches
             .opt_get::<UseChannelType>("use-channel")
             .unwrap()
-            .unwrap_or_else(|| {
+            .unwrap_or({
                 if relay {
                     UseChannelType::Relay
                 } else {
@@ -286,7 +286,7 @@ fn main() {
         let ports = matches
             .opt_get::<String>("ports")
             .unwrap_or(None)
-            .map(|v| v.split(",").map(|x| x.parse().unwrap_or(0)).collect());
+            .map(|v| v.split(',').map(|x| x.parse().unwrap_or(0)).collect());
 
         let cmd = matches.opt_present("cmd");
         #[cfg(feature = "ip_proxy")]
@@ -382,29 +382,29 @@ fn command(cmd: &str, vnt: &Vnt) -> bool {
     }
     match cmd.to_lowercase().trim() {
         "list" => {
-            let list = command::command_list(&vnt);
+            let list = command::command_list(vnt);
             console_out::console_device_list(list);
         }
         "info" => {
-            let info = command::command_info(&vnt);
+            let info = command::command_info(vnt);
             console_out::console_info(info);
         }
         "route" => {
-            let route = command::command_route(&vnt);
+            let route = command::command_route(vnt);
             console_out::console_route_table(route);
         }
         "all" => {
-            let list = command::command_list(&vnt);
+            let list = command::command_list(vnt);
             console_out::console_device_list_all(list);
         }
         "stop" => {
-            let _ = vnt.stop();
+            vnt.stop();
             return false;
         }
         _ => {}
     }
     println!();
-    return true;
+    true
 }
 
 fn print_usage(program: &str, _opts: Options) {

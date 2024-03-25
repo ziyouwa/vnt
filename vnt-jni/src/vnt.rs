@@ -1,3 +1,5 @@
+#![allow(clippy::missing_safety_doc)]
+
 use std::ptr;
 
 use jni::errors::Error;
@@ -23,30 +25,27 @@ pub unsafe extern "C" fn Java_top_wherewego_vnt_jni_Vnt_new0(
     } else {
         return 0;
     };
-    match crate::config::new_config(&mut env, config) {
-        Ok(config) => {
-            let call_back = if let Ok(call_back) = env.new_global_ref(call_back) {
-                call_back
-            } else {
+    if let Ok(config) = crate::config::new_config(&mut env, config) {
+        let call_back = if let Ok(call_back) = env.new_global_ref(call_back) {
+            call_back
+        } else {
+            return 0;
+        };
+        let vnt_util = match Vnt::new(config, CallBack::new(jvm, call_back)) {
+            Ok(vnt_util) => vnt_util,
+            Err(e) => {
+                env.throw_new(
+                    "java/lang/RuntimeException",
+                    format!("vnt start error {}", e),
+                )
+                .expect("throw");
                 return 0;
-            };
-            let vnt_util = match Vnt::new(config, CallBack::new(jvm, call_back)) {
-                Ok(vnt_util) => vnt_util,
-                Err(e) => {
-                    env.throw_new(
-                        "java/lang/RuntimeException",
-                        format!("vnt start error {}", e),
-                    )
-                    .expect("throw");
-                    return 0;
-                }
-            };
-            let ptr = Box::into_raw(Box::new(vnt_util));
-            return ptr as jlong;
-        }
-        Err(_) => {}
+            }
+        };
+        let ptr = Box::into_raw(Box::new(vnt_util));
+        return ptr as jlong;
     }
-    return 0;
+    0
 }
 
 #[no_mangle]
@@ -56,7 +55,7 @@ pub unsafe extern "C" fn Java_top_wherewego_vnt_jni_Vnt_stop0(
     raw_vnt: jlong,
 ) {
     let vnt = raw_vnt as *mut Vnt;
-    let _ = (&*vnt).stop();
+    (*vnt).stop();
 }
 #[no_mangle]
 pub unsafe extern "C" fn Java_top_wherewego_vnt_jni_Vnt_wait0(
@@ -65,7 +64,7 @@ pub unsafe extern "C" fn Java_top_wherewego_vnt_jni_Vnt_wait0(
     raw_vnt: jlong,
 ) {
     let vnt = raw_vnt as *mut Vnt;
-    let _ = (&*vnt).wait();
+    (*vnt).wait();
 }
 
 #[no_mangle]
@@ -75,7 +74,7 @@ pub unsafe extern "C" fn Java_top_wherewego_vnt_jni_Vnt_drop0(
     raw_vnt: jlong,
 ) {
     let vnt = raw_vnt as *mut Vnt;
-    let _ = Box::from_raw(vnt).stop();
+    Box::from_raw(vnt).stop();
 }
 
 #[no_mangle]

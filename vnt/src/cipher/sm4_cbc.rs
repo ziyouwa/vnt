@@ -61,14 +61,14 @@ impl Sm4CbcCipher {
             }
             let secret_body = &net_packet.payload()[..len - 12];
             let finger = finger.calculate_finger(&nonce_raw, secret_body);
-            if &finger != &net_packet.payload()[len - 12..] {
+            if finger != net_packet.payload()[len - 12..] {
                 return Err(io::Error::new(io::ErrorKind::Other, "finger err"));
             }
             net_packet.set_data_len(net_packet.data_len() - finger.len())?;
         }
         let payload = net_packet.payload();
         let len = payload.len();
-        if len < 16 || len > 1024 * 4 {
+        if !(16..=1024 * 4).contains(&len) {
             log::error!("数据异常,长度{}小于16或大于4096", len);
             return Err(io::Error::new(io::ErrorKind::Other, "data err"));
         }

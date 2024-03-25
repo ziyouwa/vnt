@@ -1,6 +1,6 @@
 use std::fmt;
 
-pub mod tcp;
+pub mod vnt_tcp;
 
 pub struct Flags(u8);
 

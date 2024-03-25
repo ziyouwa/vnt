@@ -88,10 +88,8 @@ fn run(receiver: Receiver<Op>, s_inner: Scheduler) {
                         std::sync::mpsc::RecvTimeoutError::Disconnected => return,
                     },
                 }
-            } else {
-                if let Some(task) = binary_heap.pop() {
-                    (task.f)(&s_inner);
-                }
+            } else if let Some(task) = binary_heap.pop() {
+                (task.f)(&s_inner);
             }
         }
         //取出所有任务
@@ -122,11 +120,11 @@ fn run(receiver: Receiver<Op>, s_inner: Scheduler) {
     }
 }
 fn add_task(op: Op, binary_heap: &mut BinaryHeap<DelayedTask>) -> bool {
-    return match op {
+    match op {
         Op::Task(task) => {
             binary_heap.push(task);
             true
         }
         Op::Stop => false,
-    };
+    }
 }

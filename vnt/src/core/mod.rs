@@ -46,7 +46,8 @@ pub struct Config {
 
 impl Config {
     pub fn new(
-        #[cfg(any(target_os = "windows", target_os = "linux"))] tap: bool,
+        #[cfg(any(target_os = "windows", target_os = "linux"))] 
+        tap: bool,
         token: String,
         device_id: String,
         name: String,
@@ -74,7 +75,7 @@ impl Config {
         packet_delay: u32,
     ) -> io::Result<Self> {
         for x in stun_server.iter_mut() {
-            if !x.contains(":") {
+            if !x.contains(':') {
                 x.push_str(":3478");
             }
         }

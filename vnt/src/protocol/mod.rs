@@ -40,9 +40,9 @@ impl From<u8> for Version {
     }
 }
 
-impl Into<u8> for Version {
-    fn into(self) -> u8 {
-        match self {
+impl From<Version> for u8 {
+    fn from(val: Version) -> Self {
+        match val {
             Version::V1 => 1,
             Version::Unknown(val) => val,
         }
@@ -77,9 +77,9 @@ impl From<u8> for Protocol {
     }
 }
 
-impl Into<u8> for Protocol {
-    fn into(self) -> u8 {
-        match self {
+impl From<Protocol> for u8 {
+    fn from(val: Protocol) -> Self {
+        match val {
             Protocol::Service => 1,
             Protocol::Error => 2,
             Protocol::Control => 3,
@@ -123,7 +123,7 @@ impl<B: AsRef<[u8]>> NetPacket<B> {
             ));
         }
         // 不能大于udp最大载荷长度
-        if data_len < 12 || data_len > 65535 - 20 - 8 {
+        if !(12..=65535 - 20 - 8).contains(&data_len) {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidData,
                 "length overflow",

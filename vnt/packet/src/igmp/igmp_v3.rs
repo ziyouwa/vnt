@@ -111,9 +111,9 @@ impl From<u8> for IgmpV3Type {
     }
 }
 
-impl Into<u8> for IgmpV3Type {
-    fn into(self) -> u8 {
-        match self {
+impl From<IgmpV3Type> for u8 {
+    fn from(val: IgmpV3Type) -> Self {
+        match val {
             IgmpV3Type::Query => 0x11,
             IgmpV3Type::ReportV3 => 0x22,
             IgmpV3Type::Unknown(v) => v,
@@ -154,11 +154,11 @@ impl From<u8> for IgmpV3RecordType {
     }
 }
 
-impl Into<u8> for IgmpV3RecordType {
-    fn into(self) -> u8 {
+impl From<IgmpV3RecordType> for u8 {
+    fn from(val: IgmpV3RecordType) -> Self {
         use self::IgmpV3RecordType::*;
 
-        match self {
+        match val {
             ModeIsInclude => 1,
             ModeIsExclude => 2,
             ChangeToIncludeMode => 3,
@@ -268,7 +268,7 @@ impl<B: AsRef<[u8]>> IgmpV3QueryPacket<B> {
             let buf = self.buffer.as_ref();
             let len = buf.len();
             for index in 0..num {
-                let start = (12 + index * 4) as usize;
+                let start = 12 + index * 4;
                 let end = start + 4;
                 if end > len {
                     return None;
@@ -341,7 +341,7 @@ impl<B: AsRef<[u8]>> IgmpV3ReportPacket<B> {
         } else {
             let num = num as usize;
             let mut list = Vec::with_capacity(num);
-            let mut start = 8 as usize;
+            let mut start = 8_usize;
             let buf = self.buffer.as_ref();
             let len = buf.len();
             for _ in 0..num {
@@ -413,7 +413,7 @@ impl<B: AsRef<[u8]>> IgmpV3RecordPacket<B> {
             let buf = self.buffer.as_ref();
             let len = buf.len();
             for index in 0..num {
-                let start = (8 + index * 4) as usize;
+                let start = 8 + index * 4;
                 let end = start + 4;
                 if end > len {
                     return None;

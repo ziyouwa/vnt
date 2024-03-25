@@ -586,11 +586,11 @@ impl From<u8> for Protocol {
     }
 }
 
-impl Into<u8> for Protocol {
-    fn into(self) -> u8 {
+impl From<Protocol> for u8 {
+    fn from(val: Protocol) -> Self {
         use self::Protocol::*;
 
-        match self {
+        match val {
             Hopopt => 0,
             Icmp => 1,
             Igmp => 2,

@@ -99,24 +99,22 @@ pub fn console_device_list(mut list: Vec<DeviceItem>) {
                     ("".to_string(), Style::new().red()),
                     ("".to_string(), Style::new().red()),
                 ]);
+            } else if item.nat_traversal_type.contains("p2p") {
+                out_list.push(vec![
+                    (item.name, Style::new().green()),
+                    (item.virtual_ip, Style::new().green()),
+                    (item.status, Style::new().green()),
+                    (item.nat_traversal_type, Style::new().green()),
+                    (item.rt, Style::new().green()),
+                ]);
             } else {
-                if item.nat_traversal_type.contains("p2p") {
-                    out_list.push(vec![
-                        (item.name, Style::new().green()),
-                        (item.virtual_ip, Style::new().green()),
-                        (item.status, Style::new().green()),
-                        (item.nat_traversal_type, Style::new().green()),
-                        (item.rt, Style::new().green()),
-                    ]);
-                } else {
-                    out_list.push(vec![
-                        (item.name, Style::new().yellow()),
-                        (item.virtual_ip, Style::new().yellow()),
-                        (item.status, Style::new().yellow()),
-                        (item.nat_traversal_type, Style::new().yellow()),
-                        (item.rt, Style::new().yellow()),
-                    ]);
-                }
+                out_list.push(vec![
+                    (item.name, Style::new().yellow()),
+                    (item.virtual_ip, Style::new().yellow()),
+                    (item.status, Style::new().yellow()),
+                    (item.nat_traversal_type, Style::new().yellow()),
+                    (item.rt, Style::new().yellow()),
+                ]);
             }
         } else {
             out_list.push(vec![

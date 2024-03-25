@@ -6,7 +6,7 @@ use std::sync::Arc;
 use parking_lot::RwLock;
 use protobuf::Message;
 
-use packet::icmp::{icmp, Kind};
+use packet::icmp::{vnt_icmp, Kind};
 use packet::ip::ipv4;
 use packet::ip::ipv4::packet::IpV4Packet;
 use tun::device::IFace;
@@ -109,27 +109,24 @@ impl ClientPacketHandler {
         match ip_turn_packet::Protocol::from(net_packet.transport_protocol()) {
             ip_turn_packet::Protocol::Ipv4 => {
                 let mut ipv4 = IpV4Packet::new(net_packet.payload_mut())?;
-                match ipv4.protocol() {
-                    ipv4::protocol::Protocol::Icmp => {
-                        if ipv4.destination_ip() == destination {
-                            let mut icmp_packet = icmp::IcmpPacket::new(ipv4.payload_mut())?;
-                            if icmp_packet.kind() == Kind::EchoRequest {
-                                //开启ping
-                                icmp_packet.set_kind(Kind::EchoReply);
-                                icmp_packet.update_checksum();
-                                ipv4.set_source_ip(destination);
-                                ipv4.set_destination_ip(source);
-                                ipv4.update_checksum();
-                                net_packet.set_source(destination);
-                                net_packet.set_destination(source);
-                                //不管加不加密，和接收到的数据长度都一致
-                                self.client_cipher.encrypt_ipv4(&mut net_packet)?;
-                                context.send_by_key(net_packet.buffer(), route_key)?;
-                                return Ok(());
-                            }
+                if let ipv4::protocol::Protocol::Icmp = ipv4.protocol() {
+                    if ipv4.destination_ip() == destination {
+                        let mut icmp_packet = vnt_icmp::IcmpPacket::new(ipv4.payload_mut())?;
+                        if icmp_packet.kind() == Kind::EchoRequest {
+                            //开启ping
+                            icmp_packet.set_kind(Kind::EchoReply);
+                            icmp_packet.update_checksum();
+                            ipv4.set_source_ip(destination);
+                            ipv4.set_destination_ip(source);
+                            ipv4.update_checksum();
+                            net_packet.set_source(destination);
+                            net_packet.set_destination(source);
+                            //不管加不加密，和接收到的数据长度都一致
+                            self.client_cipher.encrypt_ipv4(&mut net_packet)?;
+                            context.send_by_key(net_packet.buffer(), route_key)?;
+                            return Ok(());
                         }
                     }
-                    _ => {}
                 }
                 // ip代理只关心实际目标
                 let real_dest = ipv4.destination_ip();
@@ -293,7 +290,7 @@ impl ClientPacketHandler {
                         .iter()
                         .map(|ip| u32::from_be_bytes(ip.octets()))
                         .collect();
-                    punch_reply.public_port = nat_info.public_ports.get(0).map_or(0, |v| *v as u32);
+                    punch_reply.public_port = nat_info.public_ports.first().map_or(0, |v| *v as u32);
                     punch_reply.public_ports =
                         nat_info.public_ports.iter().map(|e| *e as u32).collect();
                     punch_reply.public_port_range = nat_info.public_port_range as u32;

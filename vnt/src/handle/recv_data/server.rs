@@ -8,7 +8,7 @@ use crossbeam_utils::atomic::AtomicCell;
 use parking_lot::Mutex;
 use protobuf::Message;
 
-use packet::icmp::{icmp, Kind};
+use packet::icmp::{vnt_icmp, Kind};
 use packet::ip::ipv4;
 use packet::ip::ipv4::packet::IpV4Packet;
 use tun::device::IFace;
@@ -184,14 +184,12 @@ impl<Call: VntCallback> PacketHandler for ServerPacketHandler<Call> {
                     ip_turn_packet::Protocol::Ipv4 => {
                         let ipv4 = IpV4Packet::new(net_packet.payload())?;
                         match ipv4.protocol() {
-                            ipv4::protocol::Protocol::Icmp => {
-                                if ipv4.destination_ip() == current_device.virtual_ip {
-                                    let icmp_packet = icmp::IcmpPacket::new(ipv4.payload())?;
-                                    if icmp_packet.kind() == Kind::EchoReply {
-                                        //网关ip ping的回应
-                                        self.device.write(net_packet.payload())?;
-                                        return Ok(());
-                                    }
+                            ipv4::protocol::Protocol::Icmp if ipv4.destination_ip() == current_device.virtual_ip => {
+                                let icmp_packet = vnt_icmp::IcmpPacket::new(ipv4.payload())?;
+                                if icmp_packet.kind() == Kind::EchoReply {
+                                    //网关ip ping的回应
+                                    self.device.write(net_packet.payload())?;
+                                    return Ok(());
                                 }
                             }
                             _ => {}

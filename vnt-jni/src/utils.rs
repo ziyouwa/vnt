@@ -20,7 +20,7 @@ pub fn to_string_not_null(
         Err(_) => {
             env.throw_new("java/lang/RuntimeException", "not utf-8")
                 .expect("throw");
-            return Err(Error::JavaException);
+            Err(Error::JavaException)
         }
     }
 }
@@ -37,7 +37,7 @@ pub fn to_string(env: &mut JNIEnv, config: &JObject, name: &str) -> Result<Optio
         Err(_) => {
             env.throw_new("java/lang/RuntimeException", "not utf-8")
                 .expect("throw");
-            return Err(Error::JavaException);
+            Err(Error::JavaException)
         }
     }
 }
@@ -51,7 +51,7 @@ pub fn to_string_array_not_null(
         None => {
             env.throw_new("java/lang/NullPointerException", name)
                 .expect("throw");
-            return Err(Error::JavaException);
+            Err(Error::JavaException)
         }
         Some(rs) => Ok(rs),
     }
@@ -98,7 +98,7 @@ pub fn to_i32_array(
     config: &JObject,
     name: &str,
 ) -> Result<Option<Vec<i32>>, Error> {
-    let obj = env.get_field(&config, name, "[I")?.l()?;
+    let obj = env.get_field(config, name, "[I")?.l()?;
     if obj.is_null() {
         Ok(None)
     } else {
@@ -115,7 +115,7 @@ pub fn to_integer(env: &mut JNIEnv, config: &JObject, name: &str) -> Result<Opti
         return Ok(None);
     }
     // 调用 intValue
-    return Ok(Some(
+    Ok(Some(
         env.call_method(value, "intValue", "()I", &[])?.i()? as _
-    ));
+    ))
 }

@@ -250,7 +250,7 @@ fn punch_packet(
         .iter()
         .map(|ip| u32::from_be_bytes(ip.octets()))
         .collect();
-    punch_reply.public_port = nat_info.public_ports.get(0).map_or(0, |v| *v as u32);
+    punch_reply.public_port = nat_info.public_ports.first().map_or(0, |v| *v as u32);
     punch_reply.public_ports = nat_info.public_ports.iter().map(|e| *e as u32).collect();
     punch_reply.public_port_range = nat_info.public_port_range as u32;
     punch_reply.local_ip = u32::from(nat_info.local_ipv4().unwrap_or(Ipv4Addr::UNSPECIFIED));

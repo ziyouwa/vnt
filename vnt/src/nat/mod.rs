@@ -67,9 +67,9 @@ impl From<NatType> for PunchNatType {
     }
 }
 
-impl Into<NatType> for PunchNatType {
-    fn into(self) -> NatType {
-        match self {
+impl From<PunchNatType> for NatType {
+    fn from(val: PunchNatType) -> Self {
+        match val {
             PunchNatType::Symmetric => NatType::Symmetric,
             PunchNatType::Cone => NatType::Cone,
         }

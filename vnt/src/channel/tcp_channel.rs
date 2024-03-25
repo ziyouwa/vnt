@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::net::{Shutdown, SocketAddr};
-#[cfg(any(unix))]
+#[cfg(unix)]
 use std::os::fd::FromRawFd;
-#[cfg(any(unix))]
+#[cfg(unix)]
 use std::os::fd::IntoRawFd;
 #[cfg(windows)]
 use std::os::windows::io::FromRawSocket;
@@ -206,29 +206,7 @@ fn tcp_writable_listen(
         poll.poll(&mut events, None)?;
         for event in events.iter() {
             match event.token() {
-                NOTIFY => {
-                    if writable_notify.is_stop() {
-                        //服务停止
-                        return Ok(());
-                    }
-                    if writable_notify.is_need_write() {
-                        // 需要写入数据
-                        if let Some(tokens) = writable_notify.take_all() {
-                            for (token, state) in tokens {
-                                if !state {
-                                    closed_handle_w(&token, &mut write_map, &context);
-                                    continue;
-                                }
-                                if let Err(e) = writable_handle(&token, &mut write_map) {
-                                    closed_handle_w(&token, &mut write_map, &context);
-                                    log::warn!("{:?}", e);
-                                }
-                            }
-                        }
-                    }
-                    if writable_notify.is_add_socket() {
-                        //添加tcp连接，并监听写事件
-                        while let Ok((mut stream, token, addr, init_buf)) = receiver.try_recv() {
+                NOTIFY if writable_notify.is_add_socket() => while let Ok((mut stream, token, addr, init_buf)) = receiver.try_recv() {
                             if let Err(e) = stream.set_nodelay(true) {
                                 log::warn!("set_nodelay err={:?}", e);
                             }
@@ -248,17 +226,16 @@ fn tcp_writable_listen(
 
                             context.tcp_map.write().insert(addr, packet_sender);
                             write_map.insert(token, (stream, addr, receiver, None));
-                        }
-                    }
-                }
+                        },
+                NOTIFY => {}
                 token => {
                     if event.is_writable() {
                         if let Err(e) = writable_handle(&token, &mut write_map) {
-                            closed_handle_w(&token, &mut write_map, &context);
+                            closed_handle_w(&token, &mut write_map, context);
                             log::warn!("{:?}", e);
                         }
                     } else {
-                        closed_handle_w(&token, &mut write_map, &context);
+                        closed_handle_w(&token, &mut write_map, context);
                     }
                 }
             }
@@ -280,7 +257,7 @@ fn accept_handle(
         let fd = stream.into_raw_socket();
         (std::net::TcpStream::from_raw_socket(fd), fd as usize)
     };
-    #[cfg(any(unix))]
+    #[cfg(unix)]
     let (tcp_stream, index) = unsafe {
         let fd = stream.into_raw_fd();
         (std::net::TcpStream::from_raw_fd(fd), fd as usize)

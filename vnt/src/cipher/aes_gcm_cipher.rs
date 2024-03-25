@@ -61,7 +61,7 @@ impl AesGcmCipher {
         let tag = secret_body.tag();
         if let Some(finger) = &self.finger {
             let finger = finger.calculate_finger(&nonce_raw, secret_body.en_body());
-            if &finger != secret_body.finger() {
+            if finger != secret_body.finger() {
                 return Err(io::Error::new(io::ErrorKind::Other, "finger err"));
             }
         }
@@ -82,7 +82,7 @@ impl AesGcmCipher {
         }
         net_packet.set_encrypt_flag(false);
         net_packet.set_data_len(net_packet.data_len() - AES_GCM_ENCRYPTION_RESERVED)?;
-        return Ok(());
+        Ok(())
     }
     /// net_packet 必须预留足够长度
     /// data_len是有效载荷的长度

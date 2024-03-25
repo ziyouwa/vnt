@@ -11,8 +11,9 @@ use rand::Rng;
 use crate::channel::context::Context;
 use crate::channel::sender::AcceptSocketSender;
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Default, Eq, PartialEq, Debug)]
 pub enum PunchModel {
+    #[default]
     IPv4,
     IPv6,
     All,
@@ -28,12 +29,6 @@ impl FromStr for PunchModel {
             "all" => Ok(PunchModel::All),
             _ => Err(format!("not match '{}', enum: ipv4/ipv6/all", s)),
         }
-    }
-}
-
-impl Default for PunchModel {
-    fn default() -> Self {
-        PunchModel::All
     }
 }
 
@@ -106,12 +101,8 @@ impl NatInfo {
         if !ip.is_multicast()
             && !ip.is_broadcast()
             && !ip.is_unspecified()
-            && !ip.is_loopback()
-            && !ip.is_private()
-        {
-            if !self.public_ips.contains(&ip) {
-                self.public_ips.push(ip);
-            }
+            && !ip.is_loopback() && !ip.is_private() && !self.public_ips.contains(&ip) {
+            self.public_ips.push(ip);
         }
     }
     pub fn local_ipv4(&self) -> Option<Ipv4Addr> {
@@ -125,51 +116,35 @@ impl NatInfo {
         if len == 0 {
             return None;
         }
-        if let Some(local_ipv4) = self.local_ipv4 {
-            Some(SocketAddr::V4(SocketAddrV4::new(
+        self.local_ipv4.map(|local_ipv4| SocketAddr::V4(SocketAddrV4::new(
                 local_ipv4,
                 self.udp_ports[index % len],
             )))
-        } else {
-            None
-        }
     }
     pub fn local_udp_ipv6addr(&self, index: usize) -> Option<SocketAddr> {
         let len = self.udp_ports.len();
         if len == 0 {
             return None;
         }
-        if let Some(ipv6) = self.ipv6 {
-            Some(SocketAddr::V6(SocketAddrV6::new(
+        self.ipv6.map(|ipv6| SocketAddr::V6(SocketAddrV6::new(
                 ipv6,
                 self.udp_ports[index % len],
                 0,
                 0,
             )))
-        } else {
-            None
-        }
     }
 
     pub fn local_tcp_ipv6addr(&self) -> Option<SocketAddr> {
         if self.tcp_port == 0 {
             return None;
         }
-        if let Some(ipv6) = self.ipv6 {
-            Some(SocketAddr::V6(SocketAddrV6::new(ipv6, self.tcp_port, 0, 0)))
-        } else {
-            None
-        }
+        self.ipv6.map(|ipv6| SocketAddr::V6(SocketAddrV6::new(ipv6, self.tcp_port, 0, 0)))
     }
     pub fn local_tcp_ipv4addr(&self) -> Option<SocketAddr> {
         if self.tcp_port == 0 {
             return None;
         }
-        if let Some(ipv4) = self.local_ipv4 {
-            Some(SocketAddr::V4(SocketAddrV4::new(ipv4, self.tcp_port)))
-        } else {
-            None
-        }
+        self.local_ipv4.map(|ipv4| SocketAddr::V4(SocketAddrV4::new(ipv4, self.tcp_port)))
     }
 }
 
@@ -279,7 +254,7 @@ impl Punch {
                 let max_k1 = 60;
                 //全局最多发送max_k2个包
                 let max_k2 = rand::thread_rng().gen_range(600..800);
-                let port = nat_info.public_ports.get(0).map(|e| *e).unwrap_or(0);
+                let port = nat_info.public_ports.first().copied().unwrap_or(0);
                 if nat_info.public_port_range < max_k1 * 3 {
                     //端口变化不大时，在预测的范围内随机发送
                     let min_port = if port > nat_info.public_port_range {
@@ -299,7 +274,7 @@ impl Punch {
                     nums.shuffle(&mut rand::thread_rng());
                     self.punch_symmetric(&nums[..k], buf, &nat_info.public_ips, max_k1 as usize)?;
                 }
-                let start = *self.port_index.entry(id.clone()).or_insert(0);
+                let start = *self.port_index.entry(id).or_insert(0);
                 let mut end = start + max_k2;
                 if end > self.port_vec.len() {
                     end = self.port_vec.len();

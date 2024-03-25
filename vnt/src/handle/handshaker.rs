@@ -48,6 +48,12 @@ impl Handshake {
     }
 }
 
+impl Default for Handshake {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// 第一次握手数据
 pub fn handshake_request_packet(secret: bool) -> io::Result<NetPacket<Vec<u8>>> {
     let mut request = HandshakeRequest::new();
@@ -100,5 +106,5 @@ pub fn secret_handshake_request_packet(
     net_packet.set_transport_protocol(service_packet::Protocol::SecretHandshakeRequest.into());
     net_packet.first_set_ttl(MAX_TTL);
     net_packet.set_payload(&bytes)?;
-    Ok(rsa_cipher.encrypt(&mut net_packet)?)
+    rsa_cipher.encrypt(&mut net_packet)
 }

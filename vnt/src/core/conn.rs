@@ -268,7 +268,7 @@ pub fn start<Call: VntCallback>(
 ) {
     // 定时心跳
     maintain::heartbeat(
-        &scheduler,
+        scheduler,
         context.clone(),
         current_device.clone(),
         device_list.clone(),
@@ -279,7 +279,7 @@ pub fn start<Call: VntCallback>(
     let idle = Idle::new(Duration::from_secs(10), context.clone());
     // 定时空闲检查
     maintain::idle_route(
-        &scheduler,
+        scheduler,
         idle,
         context.clone(),
         current_device.clone(),
@@ -288,7 +288,7 @@ pub fn start<Call: VntCallback>(
     // 定时客户端中继检测
     if !context.use_channel_type().is_only_p2p() {
         maintain::client_relay(
-            &scheduler,
+            scheduler,
             context.clone(),
             current_device.clone(),
             device_list.clone(),
@@ -297,7 +297,7 @@ pub fn start<Call: VntCallback>(
     }
     // 定时地址探测
     maintain::addr_request(
-        &scheduler,
+        scheduler,
         context.clone(),
         current_device.clone(),
         server_cipher.clone(),
@@ -306,7 +306,7 @@ pub fn start<Call: VntCallback>(
     if !context.use_channel_type().is_only_relay() {
         // 定时打洞
         maintain::punch(
-            &scheduler,
+            scheduler,
             context.clone(),
             nat_test.clone(),
             device_list.clone(),

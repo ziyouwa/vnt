@@ -17,18 +17,18 @@ pub fn stun_test_nat(stun_servers: Vec<String>) -> io::Result<(NatType, Vec<Ipv4
     let mut port_range = 0;
     let mut hash_set = HashSet::new();
     for x in h {
-        if let Ok(rs) = x.join() {
-            if let Ok((nat_type_t, ip_list_t, port_range_t)) = rs {
+        if let Ok(Ok((nat_type_t, ip_list_t, port_range_t))) = x.join() {
+            // if let Ok((nat_type_t, ip_list_t, port_range_t)) = rs {
                 if nat_type_t == NatType::Symmetric {
                     nat_type = NatType::Symmetric;
                 }
-                for x in ip_list_t {
-                    hash_set.insert(x);
+                for y in ip_list_t {
+                    hash_set.insert(y);
                 }
                 if port_range < port_range_t {
                     port_range = port_range_t;
                 }
-            }
+            // }
         }
     }
     Ok((nat_type, hash_set.into_iter().collect(), port_range))
@@ -41,30 +41,27 @@ fn test_nat(stun_server: String) -> io::Result<(NatType, Vec<Ipv4Addr>, u16)> {
     let mut port_range = 0;
     let mut hash_set = HashSet::new();
     let mut nat_type = NatType::Cone;
-    match test_nat_(&udp, true, true) {
-        Ok((mapped_addr1, changed_addr1)) => {
-            match mapped_addr1.ip() {
-                IpAddr::V4(ip) => {
-                    hash_set.insert(ip);
-                }
-                IpAddr::V6(_) => {}
+    if let Ok((mapped_addr1, changed_addr1)) = test_nat_(&udp, true, true) {
+        match mapped_addr1.ip() {
+            IpAddr::V4(ip) => {
+                hash_set.insert(ip);
             }
-            if udp.connect(changed_addr1).is_ok() {
-                if let Ok((mapped_addr2, _)) = test_nat_(&udp, false, false) {
-                    match mapped_addr2.ip() {
-                        IpAddr::V4(ip) => {
-                            hash_set.insert(ip);
-                            if mapped_addr1 != mapped_addr2 {
-                                nat_type = NatType::Symmetric;
-                            }
+            IpAddr::V6(_) => {}
+        }
+        if udp.connect(changed_addr1).is_ok() {
+            if let Ok((mapped_addr2, _)) = test_nat_(&udp, false, false) {
+                match mapped_addr2.ip() {
+                    IpAddr::V4(ip) => {
+                        hash_set.insert(ip);
+                        if mapped_addr1 != mapped_addr2 {
+                            nat_type = NatType::Symmetric;
                         }
-                        IpAddr::V6(_) => {}
                     }
-                    port_range = mapped_addr2.port().abs_diff(mapped_addr1.port());
+                    IpAddr::V6(_) => {}
                 }
+                port_range = mapped_addr2.port().abs_diff(mapped_addr1.port());
             }
         }
-        Err(_) => {}
     }
     Ok((nat_type, hash_set.into_iter().collect(), port_range))
 }
@@ -114,8 +111,8 @@ fn test_nat_(
                 }
                 _ => {}
             }
-            if changed_addr.is_some() && mapped_addr.is_some() {
-                return Ok((mapped_addr.unwrap(), changed_addr.unwrap()));
+            if let (Some(changed_addr),Some(mapped_addr)) = (changed_addr, mapped_addr) {
+                return Ok((mapped_addr, changed_addr));
             }
         }
         if let Some(addr) = mapped_addr {

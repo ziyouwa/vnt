@@ -25,9 +25,9 @@ impl From<u8> for Protocol {
     }
 }
 
-impl Into<u8> for Protocol {
-    fn into(self) -> u8 {
-        match self {
+impl From<Protocol> for u8 {
+    fn from(val: Protocol) -> Self {
+        match val {
             Protocol::TokenError => 1,
             Protocol::Disconnect => 2,
             Protocol::AddressExhausted => 3,

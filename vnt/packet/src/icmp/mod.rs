@@ -1,4 +1,4 @@
-pub mod icmp;
+pub mod vnt_icmp;
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum Kind {
@@ -161,10 +161,10 @@ impl From<u8> for Kind {
     }
 }
 
-impl Into<u8> for Kind {
-    fn into(self) -> u8 {
+impl From<Kind> for u8 {
+    fn from(val: Kind) -> Self {
         use self::Kind::*;
-        match self {
+        match val {
             EchoReply => 0,
             DestinationUnreachable => 3,
             SourceQuench => 4,
@@ -309,11 +309,11 @@ impl From<u8> for DestinationUnreachable {
     }
 }
 
-impl Into<u8> for DestinationUnreachable {
-    fn into(self) -> u8 {
+impl From<DestinationUnreachable> for u8 {
+    fn from(val: DestinationUnreachable) -> Self {
         use self::DestinationUnreachable::*;
 
-        match self {
+        match val {
             DestinationNetworkUnreachable => 0,
             DestinationHostUnreachable => 1,
             DestinationProtocolUnreachable => 2,
@@ -349,11 +349,11 @@ impl From<u8> for Redirect {
     }
 }
 
-impl Into<u8> for Redirect {
-    fn into(self) -> u8 {
+impl From<Redirect> for u8 {
+    fn from(val: Redirect) -> Self {
         use self::Redirect::*;
 
-        match self {
+        match val {
             RedirectDatagramForNetwork => 0,
             RedirectDatagramForHost => 1,
             RedirectDatagramForTosAndNetwork => 2,
@@ -375,11 +375,11 @@ impl From<u8> for TimeExceeded {
     }
 }
 
-impl Into<u8> for TimeExceeded {
-    fn into(self) -> u8 {
+impl From<TimeExceeded> for u8 {
+    fn from(val: TimeExceeded) -> Self {
         use self::TimeExceeded::*;
 
-        match self {
+        match val {
             Transit => 0,
             Reassembly => 1,
             Unknown(v) => v,
@@ -400,11 +400,11 @@ impl From<u8> for ParameterProblem {
     }
 }
 
-impl Into<u8> for ParameterProblem {
-    fn into(self) -> u8 {
+impl From<ParameterProblem> for u8 {
+    fn from(val: ParameterProblem) -> Self {
         use self::ParameterProblem::*;
 
-        match self {
+        match val {
             PointerIndicatesError => 0,
             MissingRequiredData => 1,
             BadLength => 2,

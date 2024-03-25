@@ -18,7 +18,7 @@ impl Display for DeviceInfo {
 
 impl DeviceInfo {
     pub fn new(name: String, version: String) -> Self {
-        return Self { name, version };
+        Self { name, version }
     }
 }
 
@@ -169,9 +169,9 @@ pub enum ErrorType {
     Unknown,
 }
 
-impl Into<u8> for ErrorType {
-    fn into(self) -> u8 {
-        match self {
+impl From<ErrorType> for u8 {
+    fn from(val: ErrorType) -> Self {
+        match val {
             ErrorType::TokenError => 1,
             ErrorType::Disconnect => 2,
             ErrorType::AddressExhausted => 3,

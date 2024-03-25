@@ -38,9 +38,9 @@ impl From<u8> for IgmpV1Type {
     }
 }
 
-impl Into<u8> for IgmpV1Type {
-    fn into(self) -> u8 {
-        match self {
+impl From<IgmpV1Type> for u8 {
+    fn from(val: IgmpV1Type) -> Self {
+        match val {
             IgmpV1Type::Query => 0x11,
             IgmpV1Type::ReportV1 => 0x12,
             IgmpV1Type::Unknown(v) => v,

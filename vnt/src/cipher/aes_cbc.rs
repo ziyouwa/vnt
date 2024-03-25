@@ -74,7 +74,7 @@ impl AesCbcCipher {
             AesCbcSecretBody::new(net_packet.payload_mut(), self.finger.is_some())?;
         if let Some(finger) = &self.finger {
             let finger = finger.calculate_finger(&iv[..12], secret_body.en_body());
-            if &finger != secret_body.finger() {
+            if finger != secret_body.finger() {
                 return Err(io::Error::new(io::ErrorKind::Other, "finger err"));
             }
         }
@@ -130,7 +130,7 @@ impl AesCbcCipher {
             AesCbcEnum::AES256CBC(key) => Aes256CbcEnc::new(&(*key).into(), &iv.into())
                 .encrypt_padded_mut::<Pkcs7>(net_packet.payload_mut(), p_len),
         };
-        return match rs {
+        match rs {
             Ok(buf) => {
                 let len = buf.len();
                 if let Some(finger) = &self.finger {
@@ -150,6 +150,6 @@ impl AesCbcCipher {
                 io::ErrorKind::Other,
                 format!("加密失败:{}", e),
             )),
-        };
+        }
     }
 }

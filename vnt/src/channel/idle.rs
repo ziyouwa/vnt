@@ -40,6 +40,6 @@ impl Idle {
             }
         }
         let sleep_time = self.read_idle - max;
-        return IdleType::Sleep(sleep_time);
+        IdleType::Sleep(sleep_time)
     }
 }
