@@ -193,15 +193,7 @@ fn tcp_writable_listen(
     context: &Context,
 ) -> io::Result<()> {
     let mut events = Events::with_capacity(1024);
-    let mut write_map: HashMap<
-        Token,
-        (
-            TcpStream,
-            SocketAddr,
-            Receiver<Vec<u8>>,
-            Option<(Vec<u8>, usize)>,
-        ),
-    > = HashMap::with_capacity(32);
+    let mut write_map: HashMap< Token, ( TcpStream, SocketAddr, Receiver<Vec<u8>>, Option<(Vec<u8>, usize)>)> = HashMap::with_capacity(32);
     loop {
         poll.poll(&mut events, None)?;
         for event in events.iter() {

@@ -41,7 +41,18 @@ pub fn app_home() -> io::Result<PathBuf> {
 }
 
 fn main() {
+    // 程序需要root权限才能正常运行
+    if !root_check::is_app_elevated() {
+        println!("Please run it with administrator or root privileges");
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
+        sudo::escalate_if_needed().unwrap();
+        return;
+    }
+
+    // 初始化日志
     let _ = log4rs::init_file("log4rs.yaml", Default::default());
+
+
     let args: Vec<String> = std::env::args().collect();
     let program = args[0].clone();
     let mut opts = Options::new();
@@ -90,12 +101,6 @@ fn main() {
     };
     if matches.opt_present("h") || args.len() == 1 {
         print_usage(&program, opts);
-        return;
-    }
-    if !root_check::is_app_elevated() {
-        println!("Please run it with administrator or root privileges");
-        #[cfg(any(target_os = "linux", target_os = "macos"))]
-        sudo::escalate_if_needed().unwrap();
         return;
     }
     if matches.opt_present("list") {

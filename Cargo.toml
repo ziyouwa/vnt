@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["vnt","common","vnt-cli","vnt-jni"]
+members = ["vnt","common","vnt-cli","vnt-jni", "vntctl"]
 
 [profile.release]
 opt-level = 'z'

@@ -60,7 +60,8 @@ impl Config {
         mtu: Option<u32>,
         tcp: bool,
         ip: Option<Ipv4Addr>,
-        #[cfg(feature = "ip_proxy")] no_proxy: bool,
+        #[cfg(feature = "ip_proxy")] 
+        no_proxy: bool,
         server_encrypt: bool,
         parallel: usize,
         cipher_model: CipherModel,

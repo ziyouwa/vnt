@@ -6,7 +6,7 @@ mod aes_ecb;
 #[cfg(any(feature = "aes_gcm", feature = "server_encrypt"))]
 #[cfg(not(feature = "ring-cipher"))]
 mod aes_gcm_cipher;
-mod cipher;
+mod vnt_cipher;
 #[cfg(any(
     feature = "aes_gcm",
     feature = "server_encrypt",
@@ -24,8 +24,8 @@ mod ring_aes_gcm_cipher;
 
 #[cfg(feature = "sm4_cbc")]
 mod sm4_cbc;
-pub use cipher::Cipher;
-pub use cipher::CipherModel;
+pub use vnt_cipher::Cipher;
+pub use vnt_cipher::CipherModel;
 #[cfg(any(
     feature = "aes_gcm",
     feature = "server_encrypt",
